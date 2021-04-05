@@ -4,20 +4,19 @@ import android.media.MediaCodec
 import com.pedro.rtsp.utils.RtpConstants
 import com.pedro.rtsp.utils.setLong
 import java.nio.ByteBuffer
-import java.util.*
 import kotlin.experimental.and
 import kotlin.experimental.or
 
 /**
  * Created by pedro on 27/11/18.
  */
-internal abstract class BasePacket(private val clock: Long, private val payloadType: Int) {
+abstract class BasePacket(private val clock: Long, private val payloadType: Int) {
 
-  protected var channelIdentifier: Byte = 0
+  protected var channelIdentifier: Int = 0
   protected var rtpPort = 0
   protected var rtcpPort = 0
   private var seq = 0
-  private var ssrc = Random().nextInt()
+  private var ssrc = 0
   protected val maxPacketSize = RtpConstants.MTU - 28
   protected val TAG = "BasePacket"
 
@@ -30,7 +29,11 @@ internal abstract class BasePacket(private val clock: Long, private val payloadT
 
   open fun reset() {
     seq = 0
-    ssrc = Random().nextInt()
+    ssrc = 0
+  }
+
+  fun setSSRC(ssrc: Int) {
+    this.ssrc = ssrc
   }
 
   protected fun getBuffer(size: Int): ByteArray {
@@ -42,9 +45,10 @@ internal abstract class BasePacket(private val clock: Long, private val payloadT
     return buffer
   }
 
-  protected fun updateTimeStamp(buffer: ByteArray, timestamp: Long) {
+  protected fun updateTimeStamp(buffer: ByteArray, timestamp: Long): Long {
     val ts = timestamp * clock / 1000000000L
     buffer.setLong(ts, 4, 8)
+    return ts
   }
 
   protected fun updateSeq(buffer: ByteArray) {

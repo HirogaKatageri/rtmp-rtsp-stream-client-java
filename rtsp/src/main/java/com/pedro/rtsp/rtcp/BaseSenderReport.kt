@@ -3,20 +3,19 @@ package com.pedro.rtsp.rtcp
 import android.util.Log
 import com.pedro.rtsp.rtsp.Protocol
 import com.pedro.rtsp.rtsp.RtpFrame
+import com.pedro.rtsp.utils.RtpConstants
 import com.pedro.rtsp.utils.setLong
 import java.io.IOException
 import java.io.OutputStream
-import java.util.*
 
 /**
  * Created by pedro on 7/11/18.
  */
-internal abstract class BaseSenderReport internal constructor() {
+abstract class BaseSenderReport internal constructor() {
 
   private val interval: Long = 3000
-  private val MTU = 1500
-  private val videoBuffer = ByteArray(MTU)
-  private val audioBuffer = ByteArray(MTU)
+  private val videoBuffer = ByteArray(RtpConstants.MTU)
+  private val audioBuffer = ByteArray(RtpConstants.MTU)
   private var videoTime: Long = 0
   private var audioTime: Long = 0
   private var videoPacketCount = 0
@@ -56,8 +55,6 @@ internal abstract class BaseSenderReport internal constructor() {
     videoBuffer.setLong(PACKET_LENGTH / 4 - 1.toLong(), 2, 4)
     audioBuffer.setLong(PACKET_LENGTH / 4 - 1.toLong(), 2, 4)
     /* Byte 4,5,6,7      ->  SSRC                            */
-    videoBuffer.setLong(Random().nextInt().toLong(), 4, 8)
-    audioBuffer.setLong(Random().nextInt().toLong(), 4, 8)
     /* Byte 8,9,10,11    ->  NTP timestamp hb				 */
     /* Byte 12,13,14,15  ->  NTP timestamp lb				 */
     /* Byte 16,17,18,19  ->  RTP timestamp		             */
@@ -65,10 +62,15 @@ internal abstract class BaseSenderReport internal constructor() {
     /* Byte 24,25,26,27  ->  octet count			         */
   }
 
+  fun setSSRC(ssrcVideo: Int, ssrcAudio: Int) {
+    videoBuffer.setLong(ssrcVideo.toLong(), 4, 8)
+    audioBuffer.setLong(ssrcAudio.toLong(), 4, 8)
+  }
+
   abstract fun setDataStream(outputStream: OutputStream, host: String)
 
   fun update(rtpFrame: RtpFrame, isEnableLogs: Boolean) {
-    if (rtpFrame.channelIdentifier == 2.toByte()) {
+    if (rtpFrame.channelIdentifier == RtpConstants.trackVideo) {
       updateVideo(rtpFrame, isEnableLogs)
     } else {
       updateAudio(rtpFrame, isEnableLogs)

@@ -9,7 +9,7 @@ import java.io.OutputStream
 /**
  * Created by pedro on 7/11/18.
  */
-internal class RtpSocketTcp : BaseRtpSocket() {
+open class RtpSocketTcp : BaseRtpSocket() {
 
   private var outputStream: OutputStream? = null
   private val tcpHeader: ByteArray = byteArrayOf('$'.toByte(), 0, 0, 0)
@@ -29,7 +29,7 @@ internal class RtpSocketTcp : BaseRtpSocket() {
   private fun sendFrameTCP(rtpFrame: RtpFrame, isEnableLogs: Boolean) {
     synchronized(RtpConstants.lock) {
       val len = rtpFrame.length
-      tcpHeader[1] = rtpFrame.channelIdentifier
+      tcpHeader[1] = (2 * rtpFrame.channelIdentifier).toByte()
       tcpHeader[2] = (len shr 8).toByte()
       tcpHeader[3] = (len and 0xFF).toByte()
       outputStream?.write(tcpHeader)
