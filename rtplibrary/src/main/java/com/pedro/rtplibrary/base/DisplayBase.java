@@ -331,6 +331,7 @@ public abstract class DisplayBase implements GetAacData, GetVideoData, GetMicrop
   }
 
   protected abstract void startStreamRtp(String url);
+  protected abstract void startStreamRtp(String url, String url2);
 
   /**
    * Create Intent used to init screen capture with startActivityForResult.
@@ -365,6 +366,16 @@ public abstract class DisplayBase implements GetAacData, GetVideoData, GetMicrop
       resetVideoEncoder();
     }
     startStreamRtp(url);
+  }
+
+  public void startStream(String url, String url2) {
+    streaming = true;
+    if (!recordController.isRunning()) {
+      startEncoders(resultCode, data);
+    } else {
+      resetVideoEncoder();
+    }
+    startStreamRtp(url, url2);
   }
 
   private void startEncoders(int resultCode, Intent data) {

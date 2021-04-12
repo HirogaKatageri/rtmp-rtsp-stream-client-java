@@ -110,6 +110,11 @@ public class RtspDisplay extends DisplayBase {
   }
 
   @Override
+  protected void startStreamRtp(String url, String url2) {
+    rtspClient.connect(url);
+  }
+
+  @Override
   protected void stopStreamRtp() {
     rtspClient.disconnect();
   }

@@ -59,6 +59,8 @@ class DisplayService : Service() {
         if (endpoint != null) {
             prepareStreamRtp()
             startStreamRtp(endpoint!!)
+
+
         }
         return START_STICKY
     }
@@ -173,6 +175,16 @@ class DisplayService : Service() {
         if (!displayBase!!.isStreaming) {
             if (displayBase!!.prepareVideo() && displayBase!!.prepareAudio()) {
                 displayBase!!.startStream(endpoint)
+            }
+        } else {
+            showNotification("You are already streaming :(")
+        }
+    }
+
+    private fun startStreamRtp(endpoint: String, url: String) {
+        if (!displayBase!!.isStreaming) {
+            if (displayBase!!.prepareVideo() && displayBase!!.prepareAudio()) {
+                displayBase!!.startStream(endpoint, url)
             }
         } else {
             showNotification("You are already streaming :(")
