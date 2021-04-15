@@ -1,13 +1,13 @@
-package com.pedro.rtsp.rtsp
+package com.pedro.rtsp.rtsp.commands
 
 import android.util.Base64
 import android.util.Log
 import com.pedro.rtsp.BuildConfig
-import com.pedro.rtsp.rtsp.Body.createAacBody
-import com.pedro.rtsp.rtsp.Body.createH264Body
-import com.pedro.rtsp.rtsp.Body.createH265Body
+import com.pedro.rtsp.rtsp.Protocol
+import com.pedro.rtsp.rtsp.commands.SdpBody.createAacBody
+import com.pedro.rtsp.rtsp.commands.SdpBody.createH264Body
+import com.pedro.rtsp.rtsp.commands.SdpBody.createH265Body
 import com.pedro.rtsp.utils.AuthUtil.getMd5Hash
-import com.pedro.rtsp.utils.ConnectCheckerRtsp
 import com.pedro.rtsp.utils.RtpConstants
 import java.io.BufferedReader
 import java.io.IOException
@@ -19,7 +19,7 @@ import java.util.regex.Pattern
  *
  * Class to create request to server and parse response from server.
  */
-open class CommandsManager(private val connectCheckerRtsp: ConnectCheckerRtsp) {
+open class CommandsManager() {
 
   var host: String? = null
     private set
@@ -220,58 +220,66 @@ open class CommandsManager(private val connectCheckerRtsp: ConnectCheckerRtsp) {
   }
 
   //Response parser
-  fun getResponse(reader: BufferedReader?, isAudio: Boolean, checkStatus: Boolean): String {
+  fun getResponse(reader: BufferedReader?, method: Method = Method.UNKNOWN): Command {
     reader?.let { br ->
       return try {
         var response = ""
-        var line: String
+        var line: String?
         while (br.readLine().also { line = it } != null) {
-          if (line.contains("Session")) {
-            val rtspPattern = Pattern.compile("Session: (\\w+)")
-            val matcher = rtspPattern.matcher(line)
-            if (matcher.find()) {
-              sessionId = matcher.group(1)
-            }
-            val arrSplit = line.split(";".toRegex()).toTypedArray()[0].split(":".toRegex()).toTypedArray()
-            if (arrSplit.size > 1) sessionId = arrSplit[1].trim { it <= ' ' }
-          }
-          if (line.contains("server_port")) {
-            val rtspPattern = Pattern.compile("server_port=([0-9]+)-([0-9]+)")
-            val matcher = rtspPattern.matcher(line)
-            if (matcher.find()) {
-              if (isAudio) {
-                audioServerPorts[0] = (matcher.group(1) ?: "${audioClientPorts[0]}").toInt()
-                audioServerPorts[1] = (matcher.group(2) ?: "${audioClientPorts[1]}").toInt()
-              } else {
-                videoServerPorts[0] = (matcher.group(1) ?: "${videoClientPorts[0]}").toInt()
-                videoServerPorts[1] = (matcher.group(2) ?: "${videoClientPorts[1]}").toInt()
-              }
-            }
-          }
-          response += "$line\n"
+          response += "${line ?: ""}\n"
           //end of response
-          if (line.length < 3) break
-        }
-        if (checkStatus && getResponseStatus(response) != 200) {
-          connectCheckerRtsp.onConnectionFailedRtsp("Error configure stream, $response")
-          return ""
+          if (line?.length ?: 0 < 3) break
         }
         Log.i(TAG, response)
-        response
+        if (method == Method.UNKNOWN) {
+          Command.parseCommand(response)
+        } else {
+          val command = Command.parseResponse(method, response)
+          getSession(command.text)
+          if (command.method == Method.SETUP && protocol == Protocol.UDP) {
+            getServerPorts(command.text)
+          }
+          command
+        }
       } catch (e: IOException) {
         Log.e(TAG, "read error", e)
-        ""
+        Command(method, cSeq, -1, "")
       }
     }
-    return ""
+    return Command(method, cSeq, -1, "")
   }
 
-  fun getResponseStatus(response: String): Int {
-    val matcher = Pattern.compile("RTSP/\\d.\\d (\\d+) (\\w+)", Pattern.CASE_INSENSITIVE).matcher(response)
-    return if (matcher.find()) {
-      (matcher.group(1) ?: "-1").toInt()
-    } else {
-      -1
+  private fun getSession(response: String) {
+    val rtspPattern = Pattern.compile("Session:(\\s?\\w+)")
+    val matcher = rtspPattern.matcher(response)
+    if (matcher.find()) {
+      sessionId = matcher.group(1) ?: ""
+      sessionId?.let {
+        val temp = it.split(";")[0]
+        sessionId = temp.trim()
+      }
+    }
+  }
+
+  private fun getServerPorts(response: String) {
+    var isAudio = true
+    val clientPattern = Pattern.compile("client_port=([0-9]+)-([0-9]+)")
+    val clientMatcher = clientPattern.matcher(response)
+    if (clientMatcher.find()) {
+      val port = (clientMatcher.group(1) ?: "-1").toInt()
+      isAudio = port == audioClientPorts[0]
+    }
+
+    val rtspPattern = Pattern.compile("server_port=([0-9]+)-([0-9]+)")
+    val matcher = rtspPattern.matcher(response)
+    if (matcher.find()) {
+      if (isAudio) {
+        audioServerPorts[0] = (matcher.group(1) ?: "${audioClientPorts[0]}").toInt()
+        audioServerPorts[1] = (matcher.group(2) ?: "${audioClientPorts[1]}").toInt()
+      } else {
+        videoServerPorts[0] = (matcher.group(1) ?: "${videoClientPorts[0]}").toInt()
+        videoServerPorts[1] = (matcher.group(2) ?: "${videoClientPorts[1]}").toInt()
+      }
     }
   }
 

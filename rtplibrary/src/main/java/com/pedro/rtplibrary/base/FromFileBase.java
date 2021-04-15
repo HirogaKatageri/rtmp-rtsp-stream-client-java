@@ -328,7 +328,7 @@ public abstract class FromFileBase
           this.glInterface.removeMediaCodecSurface();
           this.glInterface.stop();
           this.glInterface = glInterface;
-          videoEncoder.reset();
+          videoEncoder.forceKeyFrame();
           if (!(glInterface instanceof OffScreenGlThread)) {
             glInterface.init();
           }
@@ -358,7 +358,6 @@ public abstract class FromFileBase
   private void prepareGlView() {
     if (glInterface != null) {
       if (glInterface instanceof OffScreenGlThread) {
-        glInterface = new OffScreenGlThread(context);
         glInterface.init();
       }
       glInterface.setFps(videoEncoder.getFps());
@@ -380,7 +379,7 @@ public abstract class FromFileBase
     if (glInterface != null) {
       glInterface.removeMediaCodecSurface();
     }
-    videoEncoder.reset();
+    videoEncoder.forceKeyFrame();
     if (glInterface != null) {
       glInterface.addMediaCodecSurface(videoEncoder.getInputSurface());
     } else {

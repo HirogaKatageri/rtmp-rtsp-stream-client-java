@@ -17,11 +17,9 @@ import com.pedro.encoder.input.video.FpsLimiter;
 import com.pedro.encoder.input.video.GetCameraData;
 import com.pedro.encoder.utils.CodecUtil;
 import com.pedro.encoder.utils.yuv.YUVUtil;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by pedro on 19/01/17.
@@ -30,9 +28,9 @@ import java.util.concurrent.TimeUnit;
 
 public class VideoEncoder extends BaseEncoder implements GetCameraData {
 
-  private static final String TAG = "VideoEncoder";
   private GetVideoData getVideoData;
   private boolean spsPpsSetted = false;
+  private boolean forceKey = false;
 
   //surface to buffer encoder
   private Surface inputSurface;
@@ -52,6 +50,7 @@ public class VideoEncoder extends BaseEncoder implements GetCameraData {
 
   public VideoEncoder(GetVideoData getVideoData) {
     this.getVideoData = getVideoData;
+    TAG = "VideoEncoder";
   }
 
   public boolean prepareVideoEncoder(int width, int height, int fps, int bitRate, int rotation,
@@ -78,6 +77,7 @@ public class VideoEncoder extends BaseEncoder implements GetCameraData {
     MediaCodecInfo encoder = chooseEncoder(type);
     try {
       if (encoder != null) {
+        Log.i(TAG, "Encoder selected " + encoder.getName());
         codec = MediaCodec.createByCodecName(encoder.getName());
         if (this.formatVideoEncoder == FormatVideoEncoder.YUV420Dynamical) {
           this.formatVideoEncoder = chooseColorDynamically(encoder);
@@ -156,6 +156,8 @@ public class VideoEncoder extends BaseEncoder implements GetCameraData {
 
   @Override
   public void start(boolean resetTs) {
+    forceKey = false;
+    shouldReset = resetTs;
     spsPpsSetted = false;
     if (resetTs) {
       fpsLimiter.setFPS(fps);
@@ -174,6 +176,16 @@ public class VideoEncoder extends BaseEncoder implements GetCameraData {
     Log.i(TAG, "stopped");
   }
 
+  public void forceKeyFrame() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+      requestKeyframe();
+    } else {
+      //The only way to force keyframe if api < 19 is reset it.
+      reset();
+    }
+  }
+
+  @Override
   public void reset() {
     stop(false);
     prepareVideoEncoder(width, height, fps, bitRate, rotation, iFrameInterval, formatVideoEncoder,
@@ -215,14 +227,19 @@ public class VideoEncoder extends BaseEncoder implements GetCameraData {
   }
 
   @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-  public void forceSyncFrame() {
+  public void requestKeyframe() {
     if (isRunning()) {
-      Bundle bundle = new Bundle();
-      bundle.putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0);
-      try {
-        codec.setParameters(bundle);
-      } catch (IllegalStateException e) {
-        Log.e(TAG, "encoder need be running", e);
+      if (spsPpsSetted) {
+        Bundle bundle = new Bundle();
+        bundle.putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0);
+        try {
+          codec.setParameters(bundle);
+        } catch (IllegalStateException e) {
+          Log.e(TAG, "encoder need be running", e);
+        }
+      } else {
+        //You need wait until encoder generate first frame.
+        forceKey = true;
       }
     }
   }
@@ -299,8 +316,21 @@ public class VideoEncoder extends BaseEncoder implements GetCameraData {
     } else {
       mediaCodecInfoList = CodecUtil.getAllEncoders(mime);
     }
+
+    Log.i(TAG, mediaCodecInfoList.size() + " encoders found");
+    //re order codec for cbr priority
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+      List<MediaCodecInfo> cbrPriority = new ArrayList<>();
+      for (MediaCodecInfo mci : mediaCodecInfoList) {
+        if (isCBRModeSupported(mci)) {
+          cbrPriority.add(mci);
+        }
+      }
+      mediaCodecInfoList.removeAll(cbrPriority);
+      mediaCodecInfoList.addAll(0, cbrPriority);
+    }
     for (MediaCodecInfo mci : mediaCodecInfoList) {
-      Log.i(TAG, String.format("VideoEncoder %s", mci.getName()));
+      Log.i(TAG, "Encoder " + mci.getName());
       MediaCodecInfo.CodecCapabilities codecCapabilities = mci.getCapabilitiesForType(mime);
       for (int color : codecCapabilities.colorFormats) {
         Log.i(TAG, "Color supported: " + color);
@@ -428,6 +458,10 @@ public class VideoEncoder extends BaseEncoder implements GetCameraData {
   @Override
   protected void checkBuffer(@NonNull ByteBuffer byteBuffer,
       @NonNull MediaCodec.BufferInfo bufferInfo) {
+    if (forceKey && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+      forceKey = false;
+      requestKeyframe();
+    }
     fixTimeStamp(bufferInfo);
     if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
       if (!spsPpsSetted) {
@@ -439,14 +473,14 @@ public class VideoEncoder extends BaseEncoder implements GetCameraData {
         }
       }
     }
+    if (formatVideoEncoder == FormatVideoEncoder.SURFACE) {
+      bufferInfo.presentationTimeUs = System.nanoTime() / 1000 - presentTimeUs;
+    }
   }
 
   @Override
   protected void sendBuffer(@NonNull ByteBuffer byteBuffer,
       @NonNull MediaCodec.BufferInfo bufferInfo) {
-    if (formatVideoEncoder == FormatVideoEncoder.SURFACE) {
-      bufferInfo.presentationTimeUs = System.nanoTime() / 1000 - presentTimeUs;
-    }
     getVideoData.getVideoData(byteBuffer, bufferInfo);
   }
 }
