@@ -34,6 +34,7 @@ public class MicrophoneManager {
   private AudioPostProcessEffect audioPostProcessEffect;
   protected HandlerThread handlerThread;
   protected CustomAudioEffect customAudioEffect = new NoAudioEffect();
+  private int audioSource = MediaRecorder.AudioSource.DEFAULT;
 
   public MicrophoneManager(GetMicrophoneData getMicrophoneData) {
     this.getMicrophoneData = getMicrophoneData;
@@ -47,16 +48,16 @@ public class MicrophoneManager {
    * Create audio record
    */
   public void createMicrophone() {
-    createMicrophone(sampleRate, true, false, false);
+    createMicrophone(audioSource, sampleRate, true, false, false);
     Log.i(TAG, "Microphone created, " + sampleRate + "hz, Stereo");
   }
 
   /**
    * Create audio record with params and default audio source
    */
-  public boolean createMicrophone(int sampleRate, boolean isStereo, boolean echoCanceler,
+  public boolean createMicrophone(MediaRecorder.AudioSource audioSource, int sampleRate, boolean isStereo, boolean echoCanceler,
       boolean noiseSuppressor) {
-    return createMicrophone(MediaRecorder.AudioSource.DEFAULT, sampleRate, isStereo, echoCanceler,
+    return createMicrophone(audioSource, sampleRate, isStereo, echoCanceler,
         noiseSuppressor);
   }
 
@@ -100,7 +101,7 @@ public class MicrophoneManager {
    * @see "https://developer.android.com/guide/topics/media/playback-capture"
    * @see "https://medium.com/@debuggingisfun/android-10-audio-capture-77dd8e9070f9"
    */
-  public boolean createInternalMicrophone(AudioPlaybackCaptureConfiguration config, int sampleRate,
+  public boolean createInternalMicrophone(int audioSource, AudioPlaybackCaptureConfiguration config, int sampleRate,
       boolean isStereo, boolean echoCanceler, boolean noiseSuppressor) {
     try {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -123,7 +124,7 @@ public class MicrophoneManager {
         Log.i(TAG, "Internal microphone created, " + sampleRate + "hz, " + chl);
         created = true;
       } else {
-        return createMicrophone(sampleRate, isStereo, echoCanceler, noiseSuppressor);
+        return createMicrophone(audioSource, sampleRate, isStereo, echoCanceler, noiseSuppressor);
       }
     } catch (IllegalArgumentException e) {
       Log.e(TAG, "create microphone error", e);
@@ -131,9 +132,9 @@ public class MicrophoneManager {
     return created;
   }
 
-  public boolean createInternalMicrophone(AudioPlaybackCaptureConfiguration config, int sampleRate,
+  public boolean createInternalMicrophone(int audioSource, AudioPlaybackCaptureConfiguration config, int sampleRate,
       boolean isStereo) {
-    return createInternalMicrophone(config, sampleRate, isStereo, false, false);
+    return createInternalMicrophone(audioSource, config, sampleRate, isStereo, false, false);
   }
 
   /**

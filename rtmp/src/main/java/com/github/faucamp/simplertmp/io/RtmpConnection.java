@@ -74,6 +74,8 @@ public class RtmpConnection implements RtmpPublisher {
   private String netConnectionDescription;
   private final BitrateManager bitrateManager;
   private boolean isEnableLogs = true;
+  public static byte[] audioByte;
+  public static byte[] videoByte;
 
   public RtmpConnection(ConnectCheckerRtmp connectCheckerRtmp) {
     this.connectCheckerRtmp = connectCheckerRtmp;
@@ -457,6 +459,7 @@ public class RtmpConnection implements RtmpPublisher {
 
   @Override
   public void publishAudioData(byte[] data, int size, int dts) {
+    audioByte = data;
     if (data == null
         || data.length == 0
         || dts < 0
@@ -476,6 +479,7 @@ public class RtmpConnection implements RtmpPublisher {
 
   @Override
   public void publishVideoData(byte[] data, int size, int dts) {
+    videoByte = data;
     if (data == null
         || data.length == 0
         || dts < 0

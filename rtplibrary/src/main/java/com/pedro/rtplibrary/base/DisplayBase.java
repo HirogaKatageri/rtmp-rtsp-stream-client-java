@@ -213,7 +213,7 @@ public abstract class DisplayBase implements GetAacData, GetVideoData, GetMicrop
    * @see AudioPlaybackCaptureConfiguration.Builder#Builder(MediaProjection)
    */
   @RequiresApi(api = Build.VERSION_CODES.Q)
-  public boolean prepareInternalAudio(int bitrate, int sampleRate, boolean isStereo,
+  public boolean prepareInternalAudio(int audioSource, int bitrate, int sampleRate, boolean isStereo,
       boolean echoCanceler, boolean noiseSuppressor) {
     if (mediaProjection == null) {
       mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data);
@@ -225,7 +225,7 @@ public abstract class DisplayBase implements GetAacData, GetVideoData, GetMicrop
             .addMatchingUsage(AudioAttributes.USAGE_GAME)
             .addMatchingUsage(AudioAttributes.USAGE_UNKNOWN)
             .build();
-    if (!microphoneManager.createInternalMicrophone(config, sampleRate, isStereo, echoCanceler,
+    if (!microphoneManager.createInternalMicrophone(audioSource, config, sampleRate, isStereo, echoCanceler,
         noiseSuppressor)) {
       return false;
     }
@@ -236,8 +236,8 @@ public abstract class DisplayBase implements GetAacData, GetVideoData, GetMicrop
   }
 
   @RequiresApi(api = Build.VERSION_CODES.Q)
-  public boolean prepareInternalAudio(int bitrate, int sampleRate, boolean isStereo) {
-    return prepareInternalAudio(bitrate, sampleRate, isStereo, false, false);
+  public boolean prepareInternalAudio(int audioSource, int bitrate, int sampleRate, boolean isStereo) {
+    return prepareInternalAudio(audioSource, bitrate, sampleRate, isStereo, false, false);
   }
 
   /**
@@ -266,7 +266,7 @@ public abstract class DisplayBase implements GetAacData, GetVideoData, GetMicrop
 
   @RequiresApi(api = Build.VERSION_CODES.Q)
   public boolean prepareInternalAudio() {
-    return prepareInternalAudio(64 * 1024, 32000, true);
+    return prepareInternalAudio(MediaRecorder.AudioSource.DEFAULT,64 * 1024, 32000, true);
   }
 
   /**
