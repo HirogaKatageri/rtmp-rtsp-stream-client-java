@@ -57,7 +57,7 @@ public abstract class DisplayBase implements GetAacData, GetVideoData, GetMicrop
   private MediaProjection mediaProjection;
   private MediaProjectionManager mediaProjectionManager;
   protected VideoEncoder videoEncoder;
-  public static MicrophoneManager microphoneManager;
+  public static MicrophoneManagerManual microphoneManager;
   private AudioEncoder audioEncoder;
   private boolean streaming = false;
   protected SurfaceView surfaceView;
@@ -100,10 +100,10 @@ public abstract class DisplayBase implements GetAacData, GetVideoData, GetMicrop
         audioEncoder = new AudioEncoder(this);
         audioEncoder.setGetFrame(((MicrophoneManagerManual) microphoneManager).getGetFrame());
         break;
-      case ASYNC:
-        microphoneManager = new MicrophoneManager(this);
-        audioEncoder = new AudioEncoder(this);
-        break;
+//      case ASYNC:
+//        microphoneManager = new MicrophoneManager(this);
+//        audioEncoder = new AudioEncoder(this);
+//        break;
     }
   }
 
