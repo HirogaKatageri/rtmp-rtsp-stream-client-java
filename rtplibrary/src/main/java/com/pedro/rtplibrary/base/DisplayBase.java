@@ -58,7 +58,7 @@ public abstract class DisplayBase implements GetAacData, GetVideoData, GetMicrop
     private MediaProjection mediaProjection;
     private MediaProjectionManager mediaProjectionManager;
     protected VideoEncoder videoEncoder;
-    public static MicrophoneManager microphoneManager;
+    public MicrophoneManager microphoneManager;
     private AudioEncoder audioEncoder;
     private boolean streaming = false;
     protected SurfaceView surfaceView;
@@ -225,7 +225,6 @@ public abstract class DisplayBase implements GetAacData, GetVideoData, GetMicrop
                         .addMatchingUsage(AudioAttributes.USAGE_MEDIA)
                         .addMatchingUsage(AudioAttributes.USAGE_GAME)
                         .addMatchingUsage(AudioAttributes.USAGE_UNKNOWN)
-                        .addMatchingUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
                         .build();
         if (!microphoneManager.createInternalMicrophone(audioSource, config, sampleRate, isStereo, echoCanceler,
                 noiseSuppressor)) {
