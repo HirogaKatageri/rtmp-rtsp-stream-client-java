@@ -5,6 +5,8 @@ import android.media.MediaCodec;
 import android.os.Build;
 import android.util.Log;
 
+
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import com.pedro.rtplibrary.base.DisplayBase;
@@ -161,15 +163,16 @@ public class RtmpDisplay extends DisplayBase {
         srsFlvMuxer1.setReTries(reTries);
     }
 
+
     @Override
-    public boolean shouldRetry(String reason) {
+    protected boolean shouldRetry(String reason) {
         return srsFlvMuxer.shouldRetry(reason);
     }
 
     @Override
-    public void reConnect(long delay) {
-        srsFlvMuxer.reConnect(delay);
-        srsFlvMuxer1.reConnect(delay);
+    public void reConnect(long delay, @Nullable String backupUrl) {
+        srsFlvMuxer.reConnect(delay, backupUrl);
+        srsFlvMuxer1.reConnect(delay, backupUrl);
     }
 
     @Override

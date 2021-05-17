@@ -31,7 +31,8 @@ class RtpService : Service() {
         Log.e(TAG, "RTP service create")
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, channelId, NotificationManager.IMPORTANCE_HIGH)
+            val channel =
+                NotificationChannel(channelId, channelId, NotificationManager.IMPORTANCE_HIGH)
             notificationManager?.createNotificationChannel(channel)
         }
         keepAliveTrick()
@@ -40,9 +41,9 @@ class RtpService : Service() {
     private fun keepAliveTrick() {
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.O) {
             val notification = NotificationCompat.Builder(this, channelId)
-                    .setOngoing(true)
-                    .setContentTitle("")
-                    .setContentText("").build()
+                .setOngoing(true)
+                .setContentTitle("")
+                .setContentText("").build()
             startForeground(1, notification)
         } else {
             startForeground(1, Notification())
@@ -106,6 +107,10 @@ class RtpService : Service() {
 
 
         private val connectCheckerRtp = object : ConnectCheckerRtp {
+            override fun onConnectionStartedRtp(rtpUrl: String) {
+                showNotification("Stream connection started")
+            }
+
             override fun onConnectionSuccessRtp() {
                 showNotification("Stream started")
                 Log.e(TAG, "RTP service destroy")
@@ -144,9 +149,9 @@ class RtpService : Service() {
         private fun showNotification(text: String) {
             contextApp?.let {
                 val notification = NotificationCompat.Builder(it, channelId)
-                        .setSmallIcon(R.mipmap.ic_launcher)
-                        .setContentTitle("RTP Stream")
-                        .setContentText(text).build()
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setContentTitle("RTP Stream")
+                    .setContentText(text).build()
                 notificationManager?.notify(notifyId, notification)
             }
         }
