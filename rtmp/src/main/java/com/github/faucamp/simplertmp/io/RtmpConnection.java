@@ -198,7 +198,7 @@ public class RtmpConnection implements RtmpPublisher {
     sendConnect("");
     synchronized (connectingLock) {
       try {
-        connectingLock.wait(5000);
+        connectingLock.wait(getConnectionTimeoutMs());
       } catch (InterruptedException ex) {
         // do nothing
       }
@@ -743,9 +743,6 @@ public class RtmpConnection implements RtmpPublisher {
               publishLock.notifyAll();
             }
             break;
-          case "NetStream.Unpublish.Success":
-            connectCheckerRtmp.onConnectionFailedRtmp("Unpublish received");
-            break;
           case "NetStream.Publish.BadName":
             connectCheckerRtmp.onConnectionFailedRtmp("BadName received, endpoint in use.");
             break;
@@ -757,6 +754,16 @@ public class RtmpConnection implements RtmpPublisher {
       default:
         Log.e(TAG, "handleRxInvoke(): Unknown/unhandled server invoke: " + invoke);
         break;
+    }
+  }
+
+  private long getConnectionTimeoutMs() {
+    final long defaultTimeoutMs = 5_000;
+    if (user != null && password != null) {
+      // Authorized connection may take about 3 times longer than a regular, that's why the timeout is longer.
+      return 3 * defaultTimeoutMs;
+    } else {
+      return defaultTimeoutMs;
     }
   }
 

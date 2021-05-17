@@ -80,6 +80,10 @@ public class DisplayActivity extends AppCompatActivity
   }
 
   @Override
+  public void onConnectionStartedRtmp(String rtmpUrl) {
+  }
+
+  @Override
   public void onConnectionSuccessRtmp() {
     runOnUiThread(new Runnable() {
       @Override
