@@ -1,5 +1,6 @@
 plugins {
     id("com.android.library")
+    kotlin("android")
     `maven-publish`
 }
 
@@ -24,9 +25,7 @@ android {
 }
 
 dependencies {
-    api(project(":encoder"))
-    api(project(":rtmp"))
-    api(project(":rtsp"))
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Constants.KOTLIN_VERSION}")
 }
 
 afterEvaluate {
@@ -37,12 +36,12 @@ afterEvaluate {
                 from(components["release"])
 
                 groupId = "dev.hirogakatageri.rtp"
-                artifactId = "rtplibrary"
+                artifactId = "rtmp"
                 version = Constants.VERSION_NAME
 
                 pom {
-                    name.set("RTP Library")
-                    description.set("RTP Library by pedroSG94")
+                    name.set("RTMP")
+                    description.set("RTMP Module by pedroSG94")
 
                     licenses {
                         license {

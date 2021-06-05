@@ -24,9 +24,7 @@ android {
 }
 
 dependencies {
-    api(project(":encoder"))
-    api(project(":rtmp"))
-    api(project(":rtsp"))
+    api("androidx.annotation:annotation:1.2.0")
 }
 
 afterEvaluate {
@@ -37,12 +35,12 @@ afterEvaluate {
                 from(components["release"])
 
                 groupId = "dev.hirogakatageri.rtp"
-                artifactId = "rtplibrary"
+                artifactId = "encoder"
                 version = Constants.VERSION_NAME
 
                 pom {
-                    name.set("RTP Library")
-                    description.set("RTP Library by pedroSG94")
+                    name.set("Encoder")
+                    description.set("Encoder Module by pedroSG94")
 
                     licenses {
                         license {
