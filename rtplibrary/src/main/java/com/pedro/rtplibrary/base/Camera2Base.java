@@ -187,6 +187,21 @@ public abstract class Camera2Base implements GetAacData, GetVideoData, GetMicrop
   }
 
   /**
+   * @return true if success, false if fail (not supported or called before start camera)
+   */
+  public boolean enableVideoStabilization() {
+    return cameraManager.enableVideoStabilization();
+  }
+
+  public void disableVideoStabilization() {
+    cameraManager.disableVideoStabilization();
+  }
+
+  public boolean isVideoStabilizationEnabled() {
+    return cameraManager.isVideoStabilizationEnabled();
+  }
+
+  /**
    * Use getCameraFacing instead
    */
   @Deprecated
@@ -906,13 +921,8 @@ public abstract class Camera2Base implements GetAacData, GetVideoData, GetMicrop
   protected abstract void onSpsPpsVpsRtp(ByteBuffer sps, ByteBuffer pps, ByteBuffer vps);
 
   @Override
-  public void onSpsPps(ByteBuffer sps, ByteBuffer pps) {
-    if (streaming) onSpsPpsVpsRtp(sps, pps, null);
-  }
-
-  @Override
   public void onSpsPpsVps(ByteBuffer sps, ByteBuffer pps, ByteBuffer vps) {
-    if (streaming) onSpsPpsVpsRtp(sps, pps, vps);
+    onSpsPpsVpsRtp(sps.duplicate(), pps.duplicate(), vps != null ? vps.duplicate() : null);
   }
 
   protected abstract void getH264DataRtp(ByteBuffer h264Buffer, MediaCodec.BufferInfo info);

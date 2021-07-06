@@ -8,7 +8,7 @@ android {
     compileSdkVersion(30)
 
     defaultConfig {
-        applicationId("com.pedro.rtpstream")
+        applicationId("com.pedro.rtpstreamer")
         minSdkVersion(16)
         targetSdkVersion(30)
         versionCode = Constants.VERSION_CODE

@@ -26,6 +26,8 @@ android {
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Constants.KOTLIN_VERSION}")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:${Constants.KOTLIN_VERSION}")
+    testImplementation("junit:junit:4.13.2")
 }
 
 afterEvaluate {
